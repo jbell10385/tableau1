@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+<body style="margin:0; padding:0">
+  <div id="hidden_div">
+    <form action="javascript:void(0);" id="the_form">
+      <input type="file" id="the_file" required="required" accept=".csv"/>
+      <input type="submit" value="Rotate!"/>
+    </form>
+    <div id="file_info"></div>
+    <div id="list"></div>
+  </div>
+<script type="text/javascript">
+var arr=[];
+var urls=[];
+var times=[];
+var idx=0;
+var currentFrame = "f"
+var nextFrame = "g"
+var firstEverRotation = true
+
+ function fileInfo(e){             // CSV file selector
+   var file = e.target.files[0];
+     return;
+  }
+ function handleFileSelect(){   // Function for CSV file parsing and filling arrays
+  var file = document.getElementById("the_file").files[0];
+  var reader = new FileReader();
+  reader.onload = function(file) {  // Read the CSV file and split it into arrays
+              var content = file.target.result; // Results from the FileReader
+              var rows = file.target.result.split(/[\r\n|\n]+/);  // Split the contents of the file into rows based on carriage returns
+              for (var i = 1; i < rows.length; i++){  // For each row, split the contents into columns separated by commas (i starts at 1 to skip column headers in CSV)
+                arr = rows[i].split(',');
+                for (var j = 0; j < arr.length; j++){ // Split the URL's and times into separate arrays
+                 urls.push(arr[j]);
+                 j++;
+                 times.push(arr[j]);
+                }
+              }
+          showUrl();
+          };
+  reader.readAsText(file);
+  };
+
+  function showUrl() {    //Function for displaying the URLs for the specified time
+	var f = document.getElementById("f");
+	var g = document.getElementById("g");
+	
+	var currentUrl = urls[idx % urls.length];   //retrieves the current URL to display
+	var nextUrl = urls[(idx+1) % urls.length];   //retrieves the next URL to display
+    var thisTime = times[idx % times.length]*1000;    // retreives the time to display the current
+
+	// my dashboards are hosted at a URL like http://tableau/...
+	// I design them with a black background, so make the body match to make it seamless
+	// otherwise, set it to white
+	if(currentUrl.includes("tableau")){
+		document.body.style.background ="#000000"
+	}
+	else{
+		document.body.style.background ="#ffffff"
+	}
+	
+	// the first URL must be loaded in the foreground
+	if ( firstEverRotation ) {
+		f.src=currentUrl;
+		firstEverRotation = false;
+	}
+	
+	// load up the other frame
+	if(currentFrame == "f") {
+		f.style.display = ''
+		g.style.display = 'None'
+		g.src = nextUrl;
+		//console.log( "Loading g with "+nextUrl );
+		currentFrame = "g"
+	}
+    
+	else if(currentFrame == "g") {
+		f.style.display = 'None'
+		g.style.display = ''
+		f.src = nextUrl;
+		//console.log( "Loading f with "+nextUrl );
+		currentFrame = "f"
+	}
+
+	idx++;
+	
+	// come back soon
+	setTimeout(function()	{   //timeout is set to wait for the specified amount of time, then run the function again with the next URL
+								showUrl();
+							}, thisTime);
+	
+  };
+
+ function showHide() {    // this function hides the div containing the file selector after the file is submitted (uses the event listener below)
+   var div = document.getElementById("hidden_div");
+   if (div.style.display == 'none') {
+     div.style.display = '';
+   }
+   else {
+     div.style.display = 'none';
+   }
+ }
+ document.getElementById('the_form').addEventListener('submit', handleFileSelect, false);
+ document.getElementById('the_file').addEventListener('change', fileInfo, false);
+ document.getElementById('the_form').addEventListener('submit', showHide, false);
+
+
+</script>
+<iframe style="border: 0px" scrolling="no" id="f" src="about:blank" width="100%" height="746px"></iframe>
+<iframe style="border: 0px" scrolling="no" id="g" src="about:blank" width="100%" height="746px"></iframe>
+</iframe>
+<br><br>
+</body>
+</html>
+
